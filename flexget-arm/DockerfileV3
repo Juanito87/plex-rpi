@@ -1,0 +1,45 @@
+FROM alpine
+MAINTAINER bren
+
+# Incluye las dependencias para instalar:
+# Flexgett v3
+# Usar el plugin log_filter para filtrar el contenido del log
+# Usar el plugin cloudscraper para lidiar con la tecnología antibot de cloudflare
+# Usar el plugin subliminal para la gestión de subtitulos
+
+RUN apk add --update \
+  tzdata \
+  python3 \
+  python3-dev \
+  gcc \
+  musl-dev \
+  openssl-dev \
+  libffi-dev \
+  make \
+  libtorrent \
+  jpeg-dev \
+  zlib-dev \
+  py3-pip \
+  ca-certificates \
+  && pip3 install --no-cache-dir --disable-pip-version-check flexget==3.1.50 transmissionrpc==0.11 guessit pyOpenSSL ndg-httpsclient pyasn1 numpy cloudscraper subliminal==2.0 future \
+  && rm -rf /var/cache/apk/* \
+  &&  apk del tzdata
+
+RUN apk add --update --repository http://dl-cdn.alpinelinux.org/alpine/edge/main tinyxml2 && \
+    apk add --update --repository http://dl-cdn.alpinelinux.org/alpine/edge/community mediainfo && \
+    apk add --update ffmpeg && \
+    rm -rf /var/cache/apk/*
+
+# Copy local files
+COPY files/ /
+
+# add default volumes
+VOLUME /config /data
+WORKDIR /config
+
+# expose port for flexget webui
+EXPOSE 3539 3539/tcp
+
+# run init.sh to set uid, gid, permissions and to launch flexget
+RUN chmod +x /scripts/init.sh 
+CMD ["/scripts/init.sh"]
